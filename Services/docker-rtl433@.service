@@ -1,0 +1,14 @@
+[Unit]
+Description=rtl433
+Requires=podman.socket
+Requires=udev.service
+BindsTo=dev-RTL2832U.device
+
+[Service]
+WorkingDirectory=/usr/local/Podman/DockerCompose/rtl_433
+Restart=always
+ExecStart=/bin/bash -c 'DEVICE=%I /usr/local/bin/podman-compose -f docker-compose-rtl433.yml up'
+ExecStop=/usr/local/bin/podman-compose -f docker-compose-rtl433.yml down
+
+[Install]
+WantedBy=default.target
