@@ -96,4 +96,43 @@ sensors/Fineoffset-WH24/0/229/mic CRC
 ```
 
 ## Setup in Home Assistant
-To be added
+The first thing you need to do in Home Assistant is to add the "MQTT"
+integration. In there you will fill in information about your MQTT server. Once
+that is done you can test listen to a topic. In the Settings->Integration->MQTT
+section you can click the wheel and you will see the following window:  
+![image-MQTT-Settings](Pics/MQTT_settings.png)   
+In the "Listen to a topic" section you can put in a topic and test listen for it
+by selecting "Start listening". In my case I put in
+sensors/Fineoffset-WH24/0/229/humidity and what came back after a while was 74,
+which is percentage humidity.  
+
+Okay, so time to make some of our weather related metrics (or all of them)
+availabel as sensors in Home Assistant. You do that by loging into your Home
+Assistant instance and editing config/configuration.yaml. Go to the end of the
+file and add an entry for each metric you are interested in. Here is an example
+that exposes the light_lux metric.  
+```bash
+...
+mqtt:
+  sensor:
+    - name: "Outdoor Light"
+      state_topic: "sensors/Fineoffset-WH24/0/229/light_lux"
+      unit_of_measurement: "lux"
+...
+```
+After this you need to reload Home Assistant.  
+
+You can now go to Settings->Device & Services->Entities. In the above sensor
+configuration we picked a name "Outdoor Light" and it should appear in the
+Entities list. If you click on it some graph will show up, like:
+![outdoor light](Pics/outdoor_light.png) 
+
+You can now use this entity/sensor in automations. You will need to "Add
+trigger" that is of the type "Entity" and then pick "Numeric state" and search
+for "Outdoor Light" as the entity. 
+![Add trigger](Pics/add_trigger.png)   
+![Entity](Pics/entity.png)   
+You can then decide if you want the
+automation to take action if it goes over or under a certain value, and for how
+long. For instance, you might not want to retract your outdoor awning just
+because the sun went behind a cloud for 2 minutes...
