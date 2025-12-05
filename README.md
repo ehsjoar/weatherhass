@@ -12,7 +12,15 @@ of this are highlighted, this project will not actually deal with those examples
 but rather with the integration between the weather station and Home Assistant.
 The idea is to use a radio USB dongle (RTL2832), the rtl-433 software, and an
 MQTT bus to facilitate the introduction of the metrics into Home Assistant. Home
-Assistant already has integration for consuming metrics off an MQTT bus.
+Assistant already has integration for consuming metrics off an MQTT bus.  
+We also want everything to run in containers independent of the host OS. This is
+specifically challenging as we are dealing with hardware (RTL2832) that is
+attached on the host via a USB port. The solution needs to work even if you move
+the USB dongle around.
+
+I also defined a stretch goal to the project. As we have weather metrics
+floating around on an MQTT bus, why not also stick them in an InfluxDB so that
+we can use something like Grafana dashboard to get historical weather data
 
 ## Assumptions
 As I only had a couple of days to do this I didn't have time to script the whole
@@ -136,3 +144,54 @@ You can then decide if you want the
 automation to take action if it goes over or under a certain value, and for how
 long. For instance, you might not want to retract your outdoor awning just
 because the sun went behind a cloud for 2 minutes...
+
+## InfluxDB
+This is a more straight forward containerized solution as there is no hardware
+to worry about. I did here pick the latest InfluxDB2 version (2.7). We will be
+using "Telegraf" to listen to the MQTT topics and insert events into InfluxDB
+and Telegraf works well with 2.x version of InfluxDB. It might work with 3.x
+too, but I have no experience with that. 
+
+## Installation
+The files are in the influxdb directory:  
+**docker-compose-influxdb.yml**  
+You need to edit every thing that is surrounded by '<>'. Notably there are a
+bunch of environment variables for the influxdb container. You will also need to
+decide on your host's directory structure and edit the volumes section
+accordingly. This is also true for the telegraf container.  
+
+**config.yaml**  
+Can be left like it is
+
+**influx-configs**  
+Update org to reflect your organization
+
+**telegraf.conf**  
+This is also full of '<>' that you need to address. Note that in my case I run
+the MQTT server also as a container on the same host, so I can use the insecure
+port of the MQTT server and don't have to worry about ssl certificates. Telegraf
+can handle that too, but I have not played with that for this project.  
+Under input.mqtt_consumer.topics I have listed all topics my weather station
+emits. You will need to adjust this to fit your weather station. Also note that
+the original telegraf.conf file that is part of any distribution typically has
+all options in the file with descriptions, but all commented out. This is a
+great goto file for documentation.  
+
+The services file, docker-influxdb.service, is placed in /etc/systemd/system
+folder after it has been edited to reflect your environment. Then a systemctl
+daemon-reload before you can start the service.
+
+## Troubleshooting
+Do podman logs on your influxdb instance to make sure it is coming up okay. Then
+there is the telegraf container. It needs to be able to both connect to your
+MQTT bus as well as the influxdb container. If it can't it will complain in the
+container output (podman logs). 
+
+## Grafana
+It is beyond this project to also set up Grafana. I did have an instance set up
+and I was experimenting with some dash boards. Here is one with gauges:  
+![Grafana dashboard 1](Pics/grafana_example.png) 
+
+Here is another one with historical graphs  
+![Grafana dashboard 2 ](Pics/grafana_example2.png) 
+

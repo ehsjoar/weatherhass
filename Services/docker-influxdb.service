@@ -1,0 +1,13 @@
+[Unit]
+Description=influxdb
+Requires=podman.socket
+After=podman.socket
+
+[Service]
+WorkingDirectory=/usr/local/Podman/DockerCompose/influxdb
+Restart=always
+ExecStart=/usr/local/bin/podman-compose -f docker-compose-influxdb.yml up
+ExecStop=/usr/local/bin/podman-compose -f docker-compose-influxdb.yml down
+
+[Install]
+WantedBy=default.target

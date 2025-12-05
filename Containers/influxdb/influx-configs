@@ -1,0 +1,5 @@
+[default]
+  url = "http://localhost:8086"
+  token = "\"myAdminT0ken\""
+  org = "<your Organization>"
+  active = true
